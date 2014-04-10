@@ -76,7 +76,7 @@ function cloneArrayByString(arr) {
 ```
 这两种方法算是比较巧妙的利用了数组、字符串和JSON对象的特性，但需要注意的是，在`字符串转化法`中，要拷贝的数组**必须是字符串数组**，且选择的分隔符**不可以在数组元素中出现**，否则利用此法得到的结果是不正确的。
 
-jQuery的extend方法也可以被用来实现数组的拷贝。`jQuery.extend([deep], target, object1[, objectN])`方法接受4个参数，`deep`表示是否进行深度拷贝（可选），`target`是拷贝结果对象，`object1`是要拷贝的对象，`objectN`表示可以将多个对象或者数组合并成一个（可选）。使用jQuery.extend方法拷贝数组的示例如下：
+jQuery的extend方法也可以被用来实现数组的拷贝。`jQuery.extend([deep], target, object1[, objectN])`方法可以接受4个参数，`deep`表示是否进行深度拷贝（可选），`target`是拷贝结果对象，`object1`是要拷贝的对象，`objectN`表示可以将多个对象或者数组合并成一个（可选）。使用jQuery.extend方法拷贝数组的示例如下：
 ```js
 var array1 = ['Zhao', 'Qian', 'Sun', 'Li'];
 var array2 = [];
@@ -89,8 +89,71 @@ console.log('array2:' + array2);
 ```
 代码运行结果为：
 ```js
-array1:Zhao,Qian,Sun,Li VM1150:5
-array2:Zhao,Qian,Sun,Li VM1150:6
-array1:Zhao,Qian,Sun,Li VM1150:8
+array1:Zhao,Qian,Sun,Li
+array2:Zhao,Qian,Sun,Li
+array1:Zhao,Qian,Sun,Li
 array2:Zhao,Qian,Sun,Li,Wang
+```
+下面对文中所提到的4种拷贝数组的方法做一个性能测试。用来进行拷贝测试的数组有两个，一个是长度为10000的长字符串数组，另一个是长度为10000的对象数组，其中每个元素都是包含3层嵌套的对象。分别对这两个数组进行10000次拷贝，测试代码和结果如下：
+```js
+/**
+ * @file 数组拷贝方法性能测试
+ * @environment OS X 10.9.2, 2.5 GHz Intel Core i5, Google Chrome 版本34.0.1847.116 
+ * @date Thu Apr 10 2014
+ */
+var origin1 = [];
+var origin2 = [];
+var clone1, clone2;
+var LENGTH = 10000;
+var obj = {
+    pro1: 1,
+    pro2: '2',
+    pro3: ['a', 'b', 'c'],
+    pro4: {
+        key1: 'wang',
+        key2: [
+            {
+                name: 'John',
+                age: 26,
+                sex: 'male'
+            },
+            {
+                name: 'Lucy',
+                age: 24,
+                sex: 'female'
+            }
+        ],
+        key3: {
+            one: 'a',
+            two: 2,
+            three: [3, 2, 1]
+        }
+    }
+};
+for (var i = 0; i < LENGTH; i++) {
+    origin1.push('abcdefghijklmnopqrstuvwxyz1234567890');
+    origin2.push(obj);
+}
+var start = +new Date();
+for (i = 0; i < LENGTH; i++) {
+    clone1 = origin1.clone(); // 直接复制法
+}
+var time1 = +new Date() - start;
+for (i = 0; i < LENGTH; i++) {
+    clone1 = cloneArrayByJSON(origin1); // JSON转化法
+}
+var time2 = +new Date() - start - time1;
+for (i = 0; i < LENGTH; i++) {
+    clone1 = cloneArrayByString(origin1); // 字符串转化法
+}
+var time3 = +new Date() - start - time1 - time2;
+for (i = 0; i < LENGTH; i++) {
+    clone1 = $.extend(true, [], origin1); // jQuery.extend拷贝法
+}
+var time4 = +new Date() - start - time1 - time2 - time3;
+console.log('复制长字符串数组\n==============');
+console.log('1. 直接复制法：耗时 ' + time1 / 1000 + ' s');
+console.log('2. JSON转化法：耗时 ' + time2 / 1000 + ' s');
+console.log('3. 字符串转化法：耗时 ' + time3 / 1000 + ' s');
+console.log('4. jQuery.extend拷贝法：耗时 ' + time4 / 1000 + ' s');
 ```
