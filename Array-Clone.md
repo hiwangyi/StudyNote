@@ -1,8 +1,15 @@
 #Javascript中拷贝数组的方法
 
 在平时的开发中，经常会碰到JS数组拷贝的问题。由于JS中的数组属于引用类型变量，因此不能直接通过赋值操作来进行拷贝，所以数组拷贝的问题实际上可以引申为对引用类型变量的拷贝问题。
-我们已经知道，对于引用类型的变量拷贝需要使用深度拷贝，即对该变量的每一个成员都要深拷贝一份给一个新的同类型引用变量。基于此原则，可以得到一种最基础的数组拷贝方法，我们姑且称它为**直接复制法**。代码如下：
-`Object.prototype.clone = function () {
+
+我们已经知道，对于引用类型的变量拷贝需要使用深度拷贝，即对该变量的每一个成员都要深拷贝一份给一个新的同类型引用变量。基于此原则，可以得到一种最基础的数组拷贝方法，我们姑且称它为`直接复制法`。代码如下：
+```js
+/**
+ * 直接复制法
+ *
+ * @return {Array} 原数组的拷贝
+ */
+Object.prototype.clone = function () {
     var me = this;
     var copy = {};
     if (Object.prototype.toString.call(me) === '[object Array]') {
@@ -16,17 +23,74 @@
         }
     }
     return copy;
-}`
+}
+```
 该方法清晰明了，不但可以实现数组拷贝，还可以实现对象的拷贝。测试代码如下：
-`var array1 = [1, 2, 3, 4, 5];
+```js
+var array1 = [1, 2, 3, 4, 5];
 var array2 = array1.clone();
 console.log('array1:' + array1);
 console.log('array2:' + array2);
 array2.pop();
 console.log('array1:' + array1);
-console.log('array2:' + array2);`
+console.log('array2:' + array2);
+```
 结果为：
-`array1:1,2,3,4,5
+```js
+array1:1,2,3,4,5
 array2:1,2,3,4,5
 array1:1,2,3,4,5
-array2:1,2,3,4`
+array2:1,2,3,4
+```
+除了`直接复制法`，还有两种对数组进行拷贝的方法。一种是利用JSON.stringify和JSON.parse方法来实现，还有一种则是利用数组的join和字符串的split方法来实现。这两种方法本质都是先将要复制的数组转为字符串的形式，然后再把得到的字符串转化成新的数组。具体实现的代码如下：
+```js
+/**
+ * JSON转化法
+ *
+ * @param {Array} arr 原数组
+ * @return {Array} 原数组的拷贝
+ */
+function cloneArrayByJSON(arr) {
+    if (!arr.length) {
+        return [];
+    }
+    var arrayStr = JSON.stringify(arr);
+    var copy = JSON.parse(arrayStr);
+    return copy;
+}
+
+/**
+ * 字符串转化法
+ *
+ * @param {Array} arr 原数组
+ * @return {Array} 原数组的拷贝
+ */
+function cloneArrayByString(arr) {
+    if (!arr.length) {
+        return [];
+    }
+    var arrayStr = arr.join(',');   // 数组元素中不可以包含指定的分隔符‘,’
+    var copy = arrayStr.split(',');    // 否则split时得到的数组和原数组不同
+    return copy;
+}
+```
+这两种方法算是比较巧妙的利用了数组、字符串和JSON对象的特性，但需要注意的是，在`字符串转化法`中，要拷贝的数组**必须是字符串数组**，且选择的分隔符**不可以在数组元素中出现**，否则利用此法得到的结果是不正确的。
+
+jQuery的extend方法也可以被用来实现数组的拷贝。`jQuery.extend([deep], target, object1[, objectN])`方法接受4个参数，`deep`表示是否进行深度拷贝（可选），`target`是拷贝结果对象，`object1`是要拷贝的对象，`objectN`表示可以将多个对象或者数组合并成一个（可选）。使用jQuery.extend方法拷贝数组的示例如下：
+```js
+var array1 = ['Zhao', 'Qian', 'Sun', 'Li'];
+var array2 = [];
+$.extend(true, array2, array1);
+console.log('array1:' + array1);
+console.log('array2:' + array2);
+array2.push('Wang');
+console.log('array1:' + array1);
+console.log('array2:' + array2);
+```
+代码运行结果为：
+```js
+array1:Zhao,Qian,Sun,Li VM1150:5
+array2:Zhao,Qian,Sun,Li VM1150:6
+array1:Zhao,Qian,Sun,Li VM1150:8
+array2:Zhao,Qian,Sun,Li,Wang
+```
