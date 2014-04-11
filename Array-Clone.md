@@ -94,17 +94,18 @@ array2:Zhao,Qian,Sun,Li
 array1:Zhao,Qian,Sun,Li
 array2:Zhao,Qian,Sun,Li,Wang
 ```
-下面对文中所提到的4种拷贝数组的方法做一个性能测试。用来进行拷贝测试的数组有两个，一个是长度为10000的长字符串数组，另一个是长度为10000的对象数组，其中每个元素都是包含3层嵌套的对象。分别对这两个数组进行10000次拷贝，测试代码和结果如下：
+下面对文中所提到的4种拷贝数组的方法做一个性能测试。用来进行拷贝测试的数组有两个，一个是长度为10000的长字符串数组，另一个是长度为10000的对象数组，其中每个元素都是包含3层嵌套的对象。分别对这两个数组进行10000次与100次拷贝，测试代码和结果如下：
 ```js
 /**
  * @file 数组拷贝方法性能测试
  * @environment OS X 10.9.2, 2.5 GHz Intel Core i5, Google Chrome 版本34.0.1847.116 
- * @date Thu Apr 10 2014
+ * @date Fri Apr 11 2014
  */
 var origin1 = [];
 var origin2 = [];
 var clone1, clone2;
 var LENGTH = 10000;
+var TIMES = 100;
 var obj = {
     pro1: 1,
     pro2: '2',
@@ -151,9 +152,43 @@ for (i = 0; i < LENGTH; i++) {
     clone1 = $.extend(true, [], origin1); // jQuery.extend拷贝法
 }
 var time4 = +new Date() - start - time1 - time2 - time3;
-console.log('复制长字符串数组\n==============');
+start = +new Date();
+for (i = 0; i < TIMES; i++) {
+    clone2 = origin2.clone(); // 直接复制法
+}
+var time5 = +new Date() - start;
+for (i = 0; i < TIMES; i++) {
+    clone2 = cloneArrayByJSON(origin2); // JSON转化法
+}
+var time6 = +new Date() - time5 - start;
+for (i = 0; i < TIMES; i++) {
+    clone2 = $.extend(true, {}, origin2); // jQuery.extend拷贝法
+}
+var time7 = +new Date() - time6 - time5 - start;
+console.log('复制长字符串数组10000次\n====================');
 console.log('1. 直接复制法：耗时 ' + time1 / 1000 + ' s');
 console.log('2. JSON转化法：耗时 ' + time2 / 1000 + ' s');
 console.log('3. 字符串转化法：耗时 ' + time3 / 1000 + ' s');
 console.log('4. jQuery.extend拷贝法：耗时 ' + time4 / 1000 + ' s');
+console.log('复制长对象数组100次\n=================');
+console.log('5. 直接复制法：耗时 ' + time5 / 1000 + ' s');
+console.log('6. JSON转化法：耗时 ' + time6 / 1000 + ' s');
+console.log('7. jQuery.extend拷贝法：耗时 ' + time7 / 1000 + ' s');
 ```
+测试结果：
+```js
+复制长字符串数组10000次
+====================
+1. 直接复制法：耗时 27.417 s
+2. JSON转化法：耗时 34.661 s
+3. 字符串转化法：耗时 14.685 s
+4. jQuery.extend拷贝法：耗时 51.762 s
+复制长对象数组100次
+=================
+5. 直接复制法：耗时 33.773 s
+6. JSON转化法：耗时 7.168 s
+7. jQuery.extend拷贝法：耗时 3.236 s
+```
+通过测试结果可以得出以下结论：
+1. 在针对长字符串数组的拷贝中，`字符串转化法`的拷贝速度最快，其次是`直接复制法`和`JSON转化法`，而使用`jQuery.extend`方法拷贝的速度是最慢的；在针对长对象数组的拷贝中，`jQuery.extend`方法拷贝的速度最快，`JSON转化法`次之，而`直接复制法`则最慢
+2. 因此当要大量复制长字符串数组时，使用`字符串转化法`能达到较好的时间性能；在复制由基本类型元素构成的数组时，选择`直接复制法`或`JSON转化法`比较合适；而在复制包含大量对象的数组时，`jQuery.extend`方法的时间性能最好，这一点将在数组元素较多、对象嵌套层次较深时体现的更为明显
